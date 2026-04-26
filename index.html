@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Improving Source Extraction with Diffusion and Consistency Models</title>
+  <title>Improving Music Source Separation with Diffusion and Consistency Refinement</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     :root {
@@ -36,28 +36,13 @@
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
       font-size: clamp(1.4rem, 3vw, 2.1rem);
       font-weight: 700;
-      max-width: 800px;
+      width: 60%;
       margin: 0 auto 16px;
       line-height: 1.3;
     }
 
-    .hero .authors {
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: rgba(255,255,255,0.92);
-      margin-bottom: 4px;
-    }
-
-    .hero .institution {
-      font-size: 0.92rem;
-      color: rgba(255,255,255,0.62);
-      font-style: italic;
-      margin-bottom: 26px;
-    }
-
     .hero-text {
-      max-width: 820px;
+      width: 60%;
       margin: 20px auto 0;
       font-size: 1rem;
       color: rgba(255,255,255,0.85);
@@ -67,40 +52,18 @@
 
     .hero-text p + p { margin-top: 12px; }
 
-    .badge-row {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .badge-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 18px;
-      border-radius: 20px;
-      border: 1.5px solid rgba(255,255,255,0.35);
-      background: rgba(255,255,255,0.07);
-      color: white;
-      text-decoration: none;
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      font-size: 0.88rem;
-      font-weight: 600;
-      transition: background 0.2s, border-color 0.2s;
-    }
-
-    .badge-link:hover {
-      background: rgba(255,255,255,0.18);
-      border-color: rgba(255,255,255,0.7);
-      color: white;
-    }
-
     /* ── Main ── */
     main {
-      max-width: 1200px;
+      width: 80%;
       margin: 0 auto;
-      padding: 60px 24px 80px;
+      padding: 60px 0 80px;
+    }
+
+    .experiment-block { margin-bottom: 70px; }
+
+    .experiment-block + .experiment-block {
+      border-top: 2px solid var(--border);
+      padding-top: 60px;
     }
 
     .section-title {
@@ -109,7 +72,14 @@
       font-weight: 700;
       border-bottom: 2px solid var(--accent);
       padding-bottom: 8px;
-      margin-bottom: 24px;
+      margin-bottom: 6px;
+    }
+
+    .section-subtitle {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 22px;
     }
 
     /* ── Track Tabs ── */
@@ -235,6 +205,17 @@
       flex-shrink: 0;
     }
 
+    /* ── Placeholder ── */
+    .coming-soon {
+      text-align: center;
+      padding: 48px 24px;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 0.95rem;
+    }
+
     /* ── Footer ── */
     footer {
       border-top: 1px solid var(--border);
@@ -250,76 +231,89 @@
 <body>
 
   <header class="hero">
-    <h1>Improving Source Extraction with Diffusion and Consistency Models</h1>
+    <h1>Improving Music Source Separation with Diffusion and Consistency Refinement</h1>
     <div class="hero-text">
-      <p>Welcome to the demo page for "Improving Source Extraction with Diffusion and Consistency Models."</p>
+      <p>Welcome to the demo page for "Improving Music Source Separation with Diffusion and Consistency Refinement."</p>
       <p>
-        In this work, we investigate the integration of a score-matching diffusion model into a standard U-Net
-        architecture for time-domain musical source separation. Further, since diffusion models typically suffer
-        from iterative and thus slow sampling processes, we employ consistency distillation to accelerate the
-        sampling speed, bringing it closer to that of a Deterministic model with no loss in quality. Our model,
-        trained on the Slakh2100 dataset targeting four instruments (bass, drums, guitar, and piano), demonstrates
-        significant improvements across objective metrics compared to the baseline methods.
+        We propose an approach to music source separation that uses a generative diffusion model as a last-stage
+        refinement on top of a deterministic separator, progressively enhancing the separated sources through
+        iterative denoising. While the diffusion refinement yields measurable quality gains, it requires iterative
+        steps at inference, increasing computational cost. To speed up the inference process, we apply consistency
+        distillation, reducing inference to a single step while maintaining quality; with two or more steps, the
+        distilled model even surpasses the diffusion-based approach.
       </p>
       <p>
-        On this page, we present the separation demos of 5 different scenarios: Deterministic model, Diffusion
-        Model, and CD with 1, 2 and 4 denoising steps.
+        Crucially, our method is architecture-agnostic: we demonstrate state-of-the-art results when applied to
+        both a custom U-Net-based separator on Slakh2100 and the state-of-the-art BS-RoFormer model on MUSDB18,
+        showing that the refinement generalizes across backbone architectures.
       </p>
     </div>
   </header>
 
   <main>
-    <h2 class="section-title">Audio Examples</h2>
 
-    <ul class="track-tabs" id="trackTabs"></ul>
-    <div class="tab-content-wrap">
-      <div id="trackTabContent"></div>
+    <!-- ── U-Net / Slakh2100 ── -->
+    <div class="experiment-block" id="exp-slakh">
+      <h2 class="section-title">U-Net Experiments &mdash; Slakh2100</h2>
+      <p class="section-subtitle">Instruments: Bass &nbsp;|&nbsp; Drums &nbsp;|&nbsp; Guitar &nbsp;|&nbsp; Piano</p>
+      <ul class="track-tabs" id="slakh-tabs"></ul>
+      <div class="tab-content-wrap">
+        <div id="slakh-content"></div>
+      </div>
     </div>
+
+    <!-- ── BS-RoFormer / MUSDB18 ── -->
+    <div class="experiment-block" id="exp-musdb">
+      <h2 class="section-title">BS-RoFormer Experiments &mdash; MUSDB18</h2>
+      <p class="section-subtitle">Instruments: Bass &nbsp;|&nbsp; Drums &nbsp;|&nbsp; Vocals &nbsp;|&nbsp; Other</p>
+      <ul class="track-tabs" id="musdb-tabs"></ul>
+      <div class="tab-content-wrap">
+        <div id="musdb-content"></div>
+      </div>
+    </div>
+
   </main>
 
-  <footer>
-    &copy; 2024 Tornike Karchkhadze &amp; Shlomo Dubnov &mdash; UC San Diego
-  </footer>
+  <footer></footer>
 
   <script src="https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
   <script>
-    // ── Configuration ────────────────────────────────────────────────
-    // Change track indices here to control which tracks are shown.
-    const selectedTracks = [0, 1];
+    // ── U-Net / Slakh2100 config ─────────────────────────────────────
+    const slakhTracks = [1];
 
-    const instruments = ['bass', 'drums', 'guitar', 'piano'];
+    const slakhInstruments = ['bass', 'drums', 'guitar', 'piano'];
 
-    const models = [
+    const slakhModels = [
       {
         label: 'Original',
         rowClass: 'row-original',
-        getMix:  (i) => `Seperation/original/Mixture_audio_${i}.wav`,
-        getStem: (inst, i) => `Seperation/original/original_${inst}_${i}.wav`,
+        getMix:  (i) => `Seperation/Slakh_original/Mixture_audio_${i}.wav`,
+        getStem: (inst, i) => `Seperation/Slakh_original/original_${inst}_${i}.wav`,
       },
       {
-        label: 'Deterministic',
-        getMix:  (i) => `Seperation/Vanilla/generated_mix_${i}.wav`,
-        getStem: (inst, i) => `Seperation/Vanilla/generated_${inst}_${i}.wav`,
+        label: 'U-Net Det.',
+        getMix:  (i) => `Seperation/Slakh_UNet_Det/generated_mix_${i}.wav`,
+        getStem: (inst, i) => `Seperation/Slakh_UNet_Det/generated_${inst}_${i}.wav`,
       },
       {
-        label: 'Diffusion',
-        getMix:  (i) => `Seperation/Diffusion/generated_mix_${i}.wav`,
-        getStem: (inst, i) => `Seperation/Diffusion/generated_${inst}_${i}.wav`,
+        label: 'U-Net + Diff.',
+        getMix:  (i) => `Seperation/Slakh_UNet_Diff/generated_mix_${i}.wav`,
+        getStem: (inst, i) => `Seperation/Slakh_UNet_Diff/generated_${inst}_${i}.wav`,
       },
       {
-        label: 'CD 1-step',
-        getMix:  (i) => `Seperation/CD_1_step/generated_mix_${i}.wav`,
-        getStem: (inst, i) => `Seperation/CD_1_step/generated_${inst}_${i}.wav`,
+        label: 'U-Net + CD (T=1)',
+        getMix:  (i) => `Seperation/Slakh_UNet_CD_1step/generated_mix_${i}.wav`,
+        getStem: (inst, i) => `Seperation/Slakh_UNet_CD_1step/generated_${inst}_${i}.wav`,
       },
       {
-        label: 'CD 2-step',
-        getMix:  (i) => `Seperation/CD_2_step/generated_mix_${i}.wav`,
-        getStem: (inst, i) => `Seperation/CD_2_step/generated_${inst}_${i}.wav`,
+        label: 'U-Net + CD (T=2)',
+        getMix:  (i) => `Seperation/Slakh_UNet_CD_2step/generated_mix_${i}.wav`,
+        getStem: (inst, i) => `Seperation/Slakh_UNet_CD_2step/generated_${inst}_${i}.wav`,
       },
       {
-        label: 'CD 4-step',
-        getMix:  (i) => `Seperation/CD_4_step/generated_mix_${i}.wav`,
-        getStem: (inst, i) => `Seperation/CD_4_step/generated_${inst}_${i}.wav`,
+        label: 'U-Net + CD (T=4)',
+        getMix:  (i) => `Seperation/Slakh_UNet_CD_4step/generated_mix_${i}.wav`,
+        getStem: (inst, i) => `Seperation/Slakh_UNet_CD_4step/generated_${inst}_${i}.wav`,
       },
     ];
     // ────────────────────────────────────────────────────────────────
@@ -342,7 +336,7 @@
       </div>`;
     }
 
-    function initPlayer(wsId, autoPlay) {
+    function initPlayer(wsId) {
       if (wavesurfers[wsId]) return wavesurfers[wsId];
 
       const playerEl = document.querySelector(`.player[data-wsid="${wsId}"]`);
@@ -367,8 +361,6 @@
       ws.on('pause',  () => { btn.innerHTML = '&#9654;'; });
       ws.on('finish', () => { btn.innerHTML = '&#9654;'; });
 
-      if (autoPlay) ws.once('ready', () => ws.play());
-
       wavesurfers[wsId] = ws;
       return ws;
     }
@@ -376,13 +368,14 @@
     function handlePlay(btn) {
       const wsId = btn.dataset.wsid;
       if (!wavesurfers[wsId]) {
-        initPlayer(wsId, true);
+        const ws = initPlayer(wsId);
+        ws.once('ready', () => ws.play());
       } else {
         wavesurfers[wsId].playPause();
       }
     }
 
-    function buildTable(trackIdx) {
+    function buildTable(trackIdx, instruments, models) {
       const instrHeaders = instruments
         .map(inst => `<th>${inst.charAt(0).toUpperCase() + inst.slice(1)}</th>`)
         .join('');
@@ -414,39 +407,92 @@
       </div>`;
     }
 
-    // Build tabs + content
-    const tabList    = document.getElementById('trackTabs');
-    const tabContent = document.getElementById('trackTabContent');
+    function buildExperiment(tabsId, contentId, tracks, instruments, models) {
+      const tabList    = document.getElementById(tabsId);
+      const tabContent = document.getElementById(contentId);
+      const prefix     = tabsId;
+      const showTabs   = tracks.length > 1;
 
-    selectedTracks.forEach((trackIdx, pos) => {
-      const isFirst = pos === 0;
-      const paneId  = `track-pane-${trackIdx}`;
+      tracks.forEach((trackIdx, pos) => {
+        const isFirst = pos === 0;
+        const paneId  = `${prefix}-pane-${trackIdx}`;
 
-      tabList.insertAdjacentHTML('beforeend', `
-        <li>
-          <button class="${isFirst ? 'active' : ''}"
-                  data-pane="${paneId}"
-                  onclick="switchTab(this)">
-            Track ${trackIdx + 1}
-          </button>
-        </li>`);
+        if (showTabs) {
+          tabList.insertAdjacentHTML('beforeend', `
+            <li>
+              <button class="${isFirst ? 'active' : ''}"
+                      data-pane="${paneId}"
+                      data-tabgroup="${contentId}"
+                      onclick="switchTab(this)">
+                Track ${trackIdx + 1}
+              </button>
+            </li>`);
+        }
 
-      tabContent.insertAdjacentHTML('beforeend', `
-        <div class="tab-pane${isFirst ? ' active' : ''}" id="${paneId}">
-          ${buildTable(trackIdx)}
-        </div>`);
-    });
+        tabContent.insertAdjacentHTML('beforeend', `
+          <div class="tab-pane${isFirst ? ' active' : ''}" id="${paneId}">
+            ${buildTable(trackIdx, instruments, models)}
+          </div>`);
+      });
+    }
 
     function switchTab(btn) {
-      document.querySelectorAll('.track-tabs button').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      const groupId = btn.dataset.tabgroup;
+      const group   = document.getElementById(groupId);
+      // deactivate all tabs in this experiment's tab bar
+      btn.closest('ul').querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      // deactivate all panes in this experiment's content
+      group.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById(btn.dataset.pane).classList.add('active');
     }
 
-    // Init all players on page load so waveforms are visible immediately
+    // ── BS-RoFormer / MUSDB18 config ────────────────────────────────
+    // Track 0 is consistent across all MUSDB18 runs.
+    // Track 1 differs between Det./Diff. and CD runs, so only track 0 shown.
+    const musdbTracks = [0];
+
+    const musdbInstruments = ['bass', 'drums', 'vocals', 'other'];
+
+    const musdbModels = [
+      {
+        label: 'Original',
+        rowClass: 'row-original',
+        getMix:  (i) => `Seperation/MUSDB_original/Mixture_audio_${i}.wav`,
+        getStem: (inst, i) => `Seperation/MUSDB_original/original_${inst}_${i}.wav`,
+      },
+      {
+        label: 'BS-RF Det.',
+        getMix:  (i) => `Seperation/MUSDB_BS_RF_Det/generated_mix_${i}.wav`,
+        getStem: (inst, i) => `Seperation/MUSDB_BS_RF_Det/generated_${inst}_${i}.wav`,
+      },
+      {
+        label: 'BS-RF + Diff.',
+        getMix:  (i) => `Seperation/MUSDB_BS_RF_Diff/generated_mix_${i}.wav`,
+        getStem: (inst, i) => `Seperation/MUSDB_BS_RF_Diff/generated_${inst}_${i}.wav`,
+      },
+      {
+        label: 'BS-RF + CD (T=1)',
+        getMix:  (i) => `Seperation/MUSDB_BS_RF_CD_1step/generated_mix_${i}.wav`,
+        getStem: (inst, i) => `Seperation/MUSDB_BS_RF_CD_1step/generated_${inst}_${i}.wav`,
+      },
+      {
+        label: 'BS-RF + CD (T=2)',
+        getMix:  (i) => `Seperation/MUSDB_BS_RF_CD_2step/generated_mix_${i}.wav`,
+        getStem: (inst, i) => `Seperation/MUSDB_BS_RF_CD_2step/generated_${inst}_${i}.wav`,
+      },
+    ];
+    // ────────────────────────────────────────────────────────────────
+
+    // Build U-Net / Slakh2100
+    buildExperiment('slakh-tabs', 'slakh-content', slakhTracks, slakhInstruments, slakhModels);
+
+    // Build BS-RoFormer / MUSDB18
+    buildExperiment('musdb-tabs', 'musdb-content', musdbTracks, musdbInstruments, musdbModels);
+
+    // Init all players on page load
     document.querySelectorAll('.player').forEach(playerEl => {
-      initPlayer(playerEl.dataset.wsid, false);
+      initPlayer(playerEl.dataset.wsid);
     });
   </script>
 </body>
