@@ -143,13 +143,13 @@
       font-weight: 700;
       padding: 10px 8px;
       text-align: center;
-      border: 1px solid var(--border);
+      border: 1px solid #8a98ae;
     }
 
     .audio-table th:first-child { background: #e2e8f4; }
 
     .audio-table td {
-      border: 1px solid var(--border);
+      border: 1px solid #8a98ae;
       padding: 10px 10px;
       vertical-align: middle;
     }
@@ -195,6 +195,36 @@
     .play-btn:hover { background: var(--accent-dark); }
 
     .waveform-container { flex: 1; min-width: 0; }
+
+    .spectrogram {
+      width: 100%;
+      display: block;
+      margin-top: 5px;
+      border-radius: 3px;
+      cursor: zoom-in;
+      transition: opacity 0.15s;
+    }
+    .spectrogram:hover { opacity: 0.85; }
+
+    /* ── Lightbox ── */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+    }
+    #lightbox.open { display: flex; }
+    #lightbox img {
+      max-width: 92vw;
+      max-height: 88vh;
+      border-radius: 6px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      cursor: zoom-out;
+    }
 
     .time-display {
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -276,6 +306,10 @@
 
   <footer></footer>
 
+  <div id="lightbox" role="dialog" aria-modal="true">
+    <img id="lightbox-img" src="" alt="Spectrogram (enlarged)">
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
   <script>
     // ── U-Net / Slakh2100 config ─────────────────────────────────────
@@ -329,11 +363,13 @@
 
     function playerHTML(src) {
       const id = `ws-${playerIdCounter++}`;
+      const imgSrc = src.replace(/\.wav$/, '.png');
       return `<div class="player" data-src="${src}" data-wsid="${id}">
         <button class="play-btn" data-wsid="${id}" onclick="handlePlay(this)">&#9654;</button>
         <div class="waveform-container" id="${id}"></div>
         <span class="time-display" data-wsid="${id}">0:00</span>
-      </div>`;
+      </div>
+      <img src="${imgSrc}" class="spectrogram" loading="lazy" alt="">`;
     }
 
     function initPlayer(wsId) {
@@ -386,9 +422,12 @@
           .map(inst => `<td>${playerHTML(m.getStem(inst, trackIdx))}</td>`)
           .join('');
 
+        const mixCell = m.rowClass === 'row-original'
+          ? `<td>${playerHTML(m.getMix(trackIdx))}</td>`
+          : `<td></td>`;
         return `<tr${rowClass}>
           <td class="model-label">${m.label}</td>
-          <td>${playerHTML(m.getMix(trackIdx))}</td>
+          ${mixCell}
           ${stemCells}
         </tr>`;
       }).join('');
@@ -476,11 +515,6 @@
         getMix:  (i) => `Seperation/MUSDB_BS_RF_CD_1step/generated_mix_${i}.wav`,
         getStem: (inst, i) => `Seperation/MUSDB_BS_RF_CD_1step/generated_${inst}_${i}.wav`,
       },
-      {
-        label: 'BS-RF + CD (T=2)',
-        getMix:  (i) => `Seperation/MUSDB_BS_RF_CD_2step/generated_mix_${i}.wav`,
-        getStem: (inst, i) => `Seperation/MUSDB_BS_RF_CD_2step/generated_${inst}_${i}.wav`,
-      },
     ];
     // ────────────────────────────────────────────────────────────────
 
@@ -493,6 +527,27 @@
     // Init all players on page load
     document.querySelectorAll('.player').forEach(playerEl => {
       initPlayer(playerEl.dataset.wsid);
+    });
+
+    // Lightbox for spectrograms
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+
+    document.addEventListener('click', e => {
+      if (e.target.classList.contains('spectrogram')) {
+        lightboxImg.src = e.target.src;
+        lightbox.classList.add('open');
+      } else if (lightbox.classList.contains('open')) {
+        lightbox.classList.remove('open');
+        lightboxImg.src = '';
+      }
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        lightbox.classList.remove('open');
+        lightboxImg.src = '';
+      }
     });
   </script>
 </body>
