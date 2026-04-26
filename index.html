@@ -1,747 +1,453 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Consistency_separation</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="config/bootstrap.min.css" />
-    <link rel="stylesheet" href="config/ionicons.css" />
-    <link rel="stylesheet" href="config/theme.css" />
-    <link rel="stylesheet" href="config/template3.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js" integrity="sha384-3Jy9GmE+f7X0zTHPeZU02qcfXnuQ8M5i5ma1BM3DFCqvfW5JpMfxzL1SEgBpox+O" crossorigin="anonymous"></script>
-    <script>
-        window.MathJax = {
-          tex: {
-            inlineMath: [['$', '$'], ['\\(', '\\)']],
-            displayMath: [['$$', '$$'], ['\\[', '\\]']],
-            processEscapes: true,
-            tags: 'ams' // This enables numbering and advanced formatting
-          },
-          svg: {
-            fontCache: 'global'
-          }
-        };
-        </script>
-        <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-svg.js"></script>
-        
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Improving Source Extraction with Diffusion and Consistency Models</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --accent:      #4a6fa5;
+      --accent-dark: #2d4a7a;
+      --bg:          #ffffff;
+      --bg-alt:      #f6f8fb;
+      --border:      #dde3ec;
+      --text:        #1a1a2e;
+      --text-muted:  #555;
+    }
 
-    <style>
-        .horizontal-layout {
-            display: flex;         /* Enables flexbox */
-            flex-direction: row;   /* Aligns children horizontally */
-            justify-content: space-between; /* Distributes space between and around content items */
-            align-items: start;    /* Aligns items at the start of the container */
-            width: 80%;           /* Full width of the parent element */
-            margin: 0 200px; /* Adds space outside the container */
-        }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        #video1, #video2 {
-            flex: 1;               /* Each section takes an equal amount of space */
-            min-width: 0;          /* Allows the flex items to shrink below their set width if necessary */
-            overflow: auto;        /* Adds scroll to each section if content overflows */
-        }
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.65;
+    }
 
-        table {
-            width: 45%; /* Similar to \resizebox{0.45\textwidth}{!}{} in LaTeX */
-            border-collapse: collapse;
-            margin: auto; /* Center the table horizontally */
-        }
-        caption {
-            text-align: center;
-            margin-bottom: 8px; /* Space between caption and table */
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: center;
-        }
-        thead th {
-            border-top: 3px solid black;
-            border-bottom: 2px solid black;
-        }
-        tbody tr:first-child td {
-            border-top: 2px solid black;
-        }
-        tbody tr:last-child td {
-            border-bottom: 3px solid black;
-        }
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      color: white;
+      padding: 56px 24px 48px;
+      text-align: center;
+    }
 
+    .hero h1 {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: clamp(1.4rem, 3vw, 2.1rem);
+      font-weight: 700;
+      max-width: 800px;
+      margin: 0 auto 16px;
+      line-height: 1.3;
+    }
 
+    .hero .authors {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.92);
+      margin-bottom: 4px;
+    }
 
-        #references {
-            margin-top: 20px;
-            border-top: 1px solid #ccc;
-            padding-top: 10px;
-        }
+    .hero .institution {
+      font-size: 0.92rem;
+      color: rgba(255,255,255,0.62);
+      font-style: italic;
+      margin-bottom: 26px;
+    }
 
-        #references h3 {
-            font-size: 1.2em;
-        }
+    .hero-text {
+      max-width: 820px;
+      margin: 20px auto 0;
+      font-size: 1rem;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.75;
+      text-align: left;
+    }
 
-        #references ol {
-            list-style-type: decimal;
-            margin-left: 20px;
-        }
+    .hero-text p + p { margin-top: 12px; }
 
-        sup a, #references a {
-            text-decoration: none;
-            color: blue;
-        }
+    .badge-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
 
+    .badge-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: 20px;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.07);
+      color: white;
+      text-decoration: none;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: background 0.2s, border-color 0.2s;
+    }
 
-    </style>
-  </head>
-<body data-spy="scroll" data-target="#navbar1" data-offset="60">
-<div class="container-fluid" style="min-width:80%;">
-    <div class="row">
-        <div class="col-12 p-0 bg-primary vh-40 py-5">
-            <div class="container" style="min-width:80%;">
-                <div class="row">
-                    <div class="col-xl-12 col-lg-12 py-2 text-light">
-                        <h2 class="display-5 mb-3">
-                            Improving Source Extraction with Diffusion and Consistency Models
-                        </h2>
-                        <p class="lead mb-3">
-                            Welcome to the demo page for "Improving Source Extraction with Diffusion and Consistency Models" paper.
-                        </p>
-                        <p class="lead mb-3">
-                            In this work, we investigate the integration of a score-matching diffusion model into a standard U-Net architecture for time-domain musical source separation. Further, since diffusion models typically suffer from iterative and thus slow sampling processes, we employ consistency distillation to accelerate the sampling speed, bringing it closer to that of a Deterministic model with no loss in quality. Our model, trained on the Slakh2100 dataset targeting four instruments (bass, drums, guitar, and piano), demonstrates significant improvements across objective metrics compared to the baseline methods.
-                        </p>
-                        <p class="lead mb-3">
-                            On this page, we present the separetion demos of 5 different scenarios: Deterministic model, Diffusion Model, and CD with 1, 2 and 4 denoining steps.                           
+    .badge-link:hover {
+      background: rgba(255,255,255,0.18);
+      border-color: rgba(255,255,255,0.7);
+      color: white;
+    }
 
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
+    /* ── Main ── */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 24px 80px;
+    }
+
+    .section-title {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 1.45rem;
+      font-weight: 700;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 8px;
+      margin-bottom: 24px;
+    }
+
+    /* ── Track Tabs ── */
+    .track-tabs {
+      list-style: none;
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .track-tabs button {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 10px 28px;
+      border: none;
+      border-radius: 6px 6px 0 0;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      margin-bottom: -2px;
+      border-bottom: 2px solid transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .track-tabs button:hover {
+      background: var(--bg-alt);
+      color: var(--text);
+    }
+
+    .track-tabs button.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .tab-content-wrap {
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      padding: 28px 20px;
+      background: var(--bg);
+    }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* ── Audio Table ── */
+    .audio-table-wrap { overflow-x: auto; }
+
+    .audio-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    .audio-table th {
+      background: #edf1f7;
+      font-size: 0.87rem;
+      font-weight: 700;
+      padding: 10px 8px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    .audio-table th:first-child { background: #e2e8f4; }
+
+    .audio-table td {
+      border: 1px solid var(--border);
+      padding: 10px 10px;
+      vertical-align: middle;
+    }
+
+    .audio-table tbody tr:nth-child(even) td { background: var(--bg-alt); }
+    .audio-table tbody tr.row-original td   { background: #eef4ff; }
+
+    .audio-table .model-label {
+      font-weight: 700;
+      font-size: 0.87rem;
+      text-align: left;
+      white-space: nowrap;
+      width: 13%;
+      padding-left: 14px;
+      color: var(--text);
+    }
+
+    /* ── WaveSurfer Player ── */
+    .player {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .play-btn {
+      flex-shrink: 0;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-size: 9px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .play-btn:hover { background: var(--accent-dark); }
+
+    .waveform-container { flex: 1; min-width: 0; }
+
+    .time-display {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      min-width: 30px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      text-align: center;
+      padding: 32px 20px;
+      margin-top: 60px;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 0.83rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <h1>Improving Source Extraction with Diffusion and Consistency Models</h1>
+    <div class="hero-text">
+      <p>Welcome to the demo page for "Improving Source Extraction with Diffusion and Consistency Models."</p>
+      <p>
+        In this work, we investigate the integration of a score-matching diffusion model into a standard U-Net
+        architecture for time-domain musical source separation. Further, since diffusion models typically suffer
+        from iterative and thus slow sampling processes, we employ consistency distillation to accelerate the
+        sampling speed, bringing it closer to that of a Deterministic model with no loss in quality. Our model,
+        trained on the Slakh2100 dataset targeting four instruments (bass, drums, guitar, and piano), demonstrates
+        significant improvements across objective metrics compared to the baseline methods.
+      </p>
+      <p>
+        On this page, we present the separation demos of 5 different scenarios: Deterministic model, Diffusion
+        Model, and CD with 1, 2 and 4 denoising steps.
+      </p>
     </div>
-</div>
-<nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary" id="navbar1">
-    <div class="container" style="min-width:83%;">
-        <a class="navbar-brand mr-1 mb-1 mt-0" href="#">Demo Page</a>
-    </div>  
-</nav> 
-<main>
-
-
-    <div style="width:100%; height:2px; background-color:#000; margin-top:100px;"></div>
-    <h2 style="font-weight: bold;">Original</h2>
-    
-    <section id="video1" class="pb-1">
-        <div class="container" style="min-width:100%;">
-            <!-- JavaScript to Set the Folder Variable -->
-            <script>
-                var folder = 'Seperation/original'; // Change this variable to match your folder
-            </script>
-            <div class="row">
-                <div class="col-md-12">    
-                    <hr class="my-1"/>
-                </div>
-            </div>
-    
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card border-primary h-100">
-                        <div class="card-body d-flex flex-column align-items-start">
-                            <!-- Table layout for audio elements -->
-                            <div class="table-responsive">
-                                <table class="table table-bordered text-center">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 10%;">Track</th>
-                                            <th style="width: 18%;">Mix</th>
-                                            <th style="width: 18%;">Bass</th>
-                                            <th style="width: 18%;">Drums</th>
-                                            <th style="width: 18%;">Guitar</th>
-                                            <th style="width: 18%;">Piano</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="original"> 
-                                        <!-- Audio elements will be inserted here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-    
-            <script>
-                var audioTable = document.getElementById('original');
-        
-                for (let i = 0; i <= 7; i++) { // Loop from track 1 to 5
-                    var tableRow = document.createElement('tr');
-                    tableRow.innerHTML = `
-                        <td>Track ${i}</td>
-    
-                        <td>
-                            <audio controls style="width:100%; height:30px;">
-                                <source src="${folder}/Mixture_audio_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%; height:30px;">
-                                <source src="${folder}/original_bass_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/original_drums_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/original_guitar_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/original_piano_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-                    `;
-                    audioTable.appendChild(tableRow);
-                }
-            </script>
-        </div>
-    </section>
-    
-
-    <div style="width:100%; height:2px; background-color:#000; margin-top:100px;"></div>
-    <h2 style="font-weight: bold;">Deterministic model</h2>
-    
-    <section id="video1" class="pb-1">
-        <div class="container" style="min-width:100%;">
-            <!-- JavaScript to Set the Folder Variable -->
-            <script>
-                var folder = 'Seperation/Vanilla'; // Change this variable to match your folder
-            </script>
-            <div class="row">
-                <div class="col-md-12">    
-                    <hr class="my-1"/>
-                </div>
-            </div>
-    
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card border-primary h-100">
-                        <div class="card-body d-flex flex-column align-items-start">
-                            <!-- Table layout for audio elements -->
-                            <div class="table-responsive">
-                                <table class="table table-bordered text-center">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 10%;">Track</th>
-                                            <th style="width: 18%;">Mix</th>
-                                            <th style="width: 18%;">Bass</th>
-                                            <th style="width: 18%;">Drums</th>
-                                            <th style="width: 18%;">Guitar</th>
-                                            <th style="width: 18%;">Piano</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="Vanilla"> 
-                                        <!-- Audio elements will be inserted here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-    
-            <script>
-                var audioTable = document.getElementById('Vanilla');
-        
-                for (let i = 0; i <= 7; i++) { // Loop from track 1 to 5
-                    var tableRow = document.createElement('tr');
-                    tableRow.innerHTML = `
-                        <td>Track ${i}</td>
-    
-                        <td>
-                            <audio controls style="width:100%; height:30px;">
-                                <source src="${folder}/generated_mix_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%; height:30px;">
-                                <source src="${folder}/generated_bass_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_drums_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_guitar_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_piano_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-                    `;
-                    audioTable.appendChild(tableRow);
-                }
-            </script>
-        </div>
-    </section>
-
-
-
-
-
-
-    <div style="width:100%; height:2px; background-color:#000; margin-top:100px;"></div>
-    <h2 style="font-weight: bold;">Diffusion</h2>
-    
-    <section id="video1" class="pb-1">
-        <div class="container" style="min-width:100%;">
-            <!-- JavaScript to Set the Folder Variable -->
-            <script>
-                var folder = 'Seperation/Diffusion'; // Change this variable to match your folder
-            </script>
-            <div class="row">
-                <div class="col-md-12">    
-                    <hr class="my-1"/>
-                </div>
-            </div>
-    
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card border-primary h-100">
-                        <div class="card-body d-flex flex-column align-items-start">
-                            <!-- Table layout for audio elements -->
-                            <div class="table-responsive">
-                                <table class="table table-bordered text-center">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 10%;">Track</th>
-                                            <th style="width: 18%;">Mix</th>
-                                            <th style="width: 18%;">Bass</th>
-                                            <th style="width: 18%;">Drums</th>
-                                            <th style="width: 18%;">Guitar</th>
-                                            <th style="width: 18%;">Piano</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="Diffusion"> 
-                                        <!-- Audio elements will be inserted here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-    
-            <script>
-                var audioTable = document.getElementById('Diffusion');
-        
-                for (let i = 0; i <= 7; i++) { // Loop from track 1 to 5
-                    var tableRow = document.createElement('tr');
-                    tableRow.innerHTML = `
-                        <td>Track ${i}</td>
-    
-                        <td>
-                            <audio controls style="width:100%; height:30px;">
-                                <source src="${folder}/generated_mix_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%; height:30px;">
-                                <source src="${folder}/generated_bass_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_drums_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_guitar_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_piano_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-                    `;
-                    audioTable.appendChild(tableRow);
-                }
-            </script>
-        </div>
-    </section>
-
-
-
-
-
-
-    <div style="width:100%; height:2px; background-color:#000; margin-top:100px;"></div>
-    <h2 style="font-weight: bold;">CD_1_step</h2>
-    
-    <section id="video1" class="pb-1">
-        <div class="container" style="min-width:100%;">
-            <!-- JavaScript to Set the Folder Variable -->
-            <script>
-                var folder = 'Seperation/CD_1_step'; // Change this variable to match your folder
-            </script>
-            <div class="row">
-                <div class="col-md-12">    
-                    <hr class="my-1"/>
-                </div>
-            </div>
-    
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card border-primary h-100">
-                        <div class="card-body d-flex flex-column align-items-start">
-                            <!-- Table layout for audio elements -->
-                            <div class="table-responsive">
-                                <table class="table table-bordered text-center">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 10%;">Track</th>
-                                            <th style="width: 18%;">Mix</th>
-                                            <th style="width: 18%;">Bass</th>
-                                            <th style="width: 18%;">Drums</th>
-                                            <th style="width: 18%;">Guitar</th>
-                                            <th style="width: 18%;">Piano</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="CD_1_step"> 
-                                        <!-- Audio elements will be inserted here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-    
-            <script>
-                var audioTable = document.getElementById('CD_1_step');
-        
-                for (let i = 0; i <= 7; i++) { // Loop from track 1 to 5
-                    var tableRow = document.createElement('tr');
-                    tableRow.innerHTML = `
-                        <td>Track ${i}</td>
-    
-                        <td>
-                            <audio controls style="width:100%; height:30px;">
-                                <source src="${folder}/generated_mix_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%; height:30px;">
-                                <source src="${folder}/generated_bass_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_drums_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_guitar_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_piano_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-                    `;
-                    audioTable.appendChild(tableRow);
-                }
-            </script>
-        </div>
-    </section>
-
-
-
-
-    <div style="width:100%; height:2px; background-color:#000; margin-top:100px;"></div>
-    <h2 style="font-weight: bold;">CD_2_step</h2>
-    
-    <section id="video1" class="pb-1">
-        <div class="container" style="min-width:100%;">
-            <!-- JavaScript to Set the Folder Variable -->
-            <script>
-                var folder = 'Seperation/CD_2_step'; // Change this variable to match your folder
-            </script>
-            <div class="row">
-                <div class="col-md-12">    
-                    <hr class="my-1"/>
-                </div>
-            </div>
-    
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card border-primary h-100">
-                        <div class="card-body d-flex flex-column align-items-start">
-                            <!-- Table layout for audio elements -->
-                            <div class="table-responsive">
-                                <table class="table table-bordered text-center">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 10%;">Track</th>
-                                            <th style="width: 18%;">Mix</th>
-                                            <th style="width: 18%;">Bass</th>
-                                            <th style="width: 18%;">Drums</th>
-                                            <th style="width: 18%;">Guitar</th>
-                                            <th style="width: 18%;">Piano</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="CD_2_step"> 
-                                        <!-- Audio elements will be inserted here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-    
-            <script>
-                var audioTable = document.getElementById('CD_2_step');
-        
-                for (let i = 0; i <= 7; i++) { // Loop from track 1 to 5
-                    var tableRow = document.createElement('tr');
-                    tableRow.innerHTML = `
-                        <td>Track ${i}</td>
-    
-                        <td>
-                            <audio controls style="width:100%; height:30px;">
-                                <source src="${folder}/generated_mix_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%; height:30px;">
-                                <source src="${folder}/generated_bass_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_drums_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_guitar_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_piano_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-                    `;
-                    audioTable.appendChild(tableRow);
-                }
-            </script>
-        </div>
-    </section>
-
-
-
-
-
-
-
-
-    <div style="width:100%; height:2px; background-color:#000; margin-top:100px;"></div>
-    <h2 style="font-weight: bold;">CD_4_step</h2>
-    
-    <section id="video1" class="pb-1">
-        <div class="container" style="min-width:100%;">
-            <!-- JavaScript to Set the Folder Variable -->
-            <script>
-                var folder = 'Seperation/CD_4_step'; // Change this variable to match your folder
-            </script>
-            <div class="row">
-                <div class="col-md-12">    
-                    <hr class="my-1"/>
-                </div>
-            </div>
-    
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card border-primary h-100">
-                        <div class="card-body d-flex flex-column align-items-start">
-                            <!-- Table layout for audio elements -->
-                            <div class="table-responsive">
-                                <table class="table table-bordered text-center">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 10%;">Track</th>
-                                            <th style="width: 18%;">Mix</th>
-                                            <th style="width: 18%;">Bass</th>
-                                            <th style="width: 18%;">Drums</th>
-                                            <th style="width: 18%;">Guitar</th>
-                                            <th style="width: 18%;">Piano</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="CD_4_step"> 
-                                        <!-- Audio elements will be inserted here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-    
-            <script>
-                var audioTable = document.getElementById('CD_4_step');
-        
-                for (let i = 0; i <= 7; i++) { // Loop from track 1 to 5
-                    var tableRow = document.createElement('tr');
-                    tableRow.innerHTML = `
-                        <td>Track ${i}</td>
-    
-                        <td>
-                            <audio controls style="width:100%; height:30px;">
-                                <source src="${folder}/generated_mix_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%; height:30px;">
-                                <source src="${folder}/generated_bass_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_drums_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_guitar_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-    
-                        <td>
-                            <audio controls style="width:100%;height:30px;">
-                                <source src="${folder}/generated_piano_${i}.wav" type="audio/mpeg">
-                                Your browser does not support the audio.
-                            </audio>
-                        </td>
-                    `;
-                    audioTable.appendChild(tableRow);
-                }
-            </script>
-        </div>
-    </section>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-    
-    
-    
-
-
-
-
-
-
-
-
-
-</main>
-    <footer id="footer" class="bg-dark text-light py-5">
-    </footer> 
-<script src="config/jquery.min.js"></script>
-<script src="config/popper.min.js"></script>
-<script src="config/bootstrap.min.js"></script>
-<script src="config/scripts.js"></script>
+  </header>
+
+  <main>
+    <h2 class="section-title">Audio Examples</h2>
+
+    <ul class="track-tabs" id="trackTabs"></ul>
+    <div class="tab-content-wrap">
+      <div id="trackTabContent"></div>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2024 Tornike Karchkhadze &amp; Shlomo Dubnov &mdash; UC San Diego
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+  <script>
+    // ── Configuration ────────────────────────────────────────────────
+    // Change track indices here to control which tracks are shown.
+    const selectedTracks = [0, 1];
+
+    const instruments = ['bass', 'drums', 'guitar', 'piano'];
+
+    const models = [
+      {
+        label: 'Original',
+        rowClass: 'row-original',
+        getMix:  (i) => `Seperation/original/Mixture_audio_${i}.wav`,
+        getStem: (inst, i) => `Seperation/original/original_${inst}_${i}.wav`,
+      },
+      {
+        label: 'Deterministic',
+        getMix:  (i) => `Seperation/Vanilla/generated_mix_${i}.wav`,
+        getStem: (inst, i) => `Seperation/Vanilla/generated_${inst}_${i}.wav`,
+      },
+      {
+        label: 'Diffusion',
+        getMix:  (i) => `Seperation/Diffusion/generated_mix_${i}.wav`,
+        getStem: (inst, i) => `Seperation/Diffusion/generated_${inst}_${i}.wav`,
+      },
+      {
+        label: 'CD 1-step',
+        getMix:  (i) => `Seperation/CD_1_step/generated_mix_${i}.wav`,
+        getStem: (inst, i) => `Seperation/CD_1_step/generated_${inst}_${i}.wav`,
+      },
+      {
+        label: 'CD 2-step',
+        getMix:  (i) => `Seperation/CD_2_step/generated_mix_${i}.wav`,
+        getStem: (inst, i) => `Seperation/CD_2_step/generated_${inst}_${i}.wav`,
+      },
+      {
+        label: 'CD 4-step',
+        getMix:  (i) => `Seperation/CD_4_step/generated_mix_${i}.wav`,
+        getStem: (inst, i) => `Seperation/CD_4_step/generated_${inst}_${i}.wav`,
+      },
+    ];
+    // ────────────────────────────────────────────────────────────────
+
+    const wavesurfers = {};
+    let playerIdCounter = 0;
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function playerHTML(src) {
+      const id = `ws-${playerIdCounter++}`;
+      return `<div class="player" data-src="${src}" data-wsid="${id}">
+        <button class="play-btn" data-wsid="${id}" onclick="handlePlay(this)">&#9654;</button>
+        <div class="waveform-container" id="${id}"></div>
+        <span class="time-display" data-wsid="${id}">0:00</span>
+      </div>`;
+    }
+
+    function initPlayer(wsId, autoPlay) {
+      if (wavesurfers[wsId]) return wavesurfers[wsId];
+
+      const playerEl = document.querySelector(`.player[data-wsid="${wsId}"]`);
+      const src      = playerEl.dataset.src;
+      const timeEl   = document.querySelector(`.time-display[data-wsid="${wsId}"]`);
+      const btn      = document.querySelector(`.play-btn[data-wsid="${wsId}"]`);
+
+      const ws = WaveSurfer.create({
+        container: `#${wsId}`,
+        waveColor: '#a0b4cc',
+        progressColor: '#4a6fa5',
+        height: 40,
+        barWidth: 2,
+        barGap: 1,
+        barRadius: 2,
+        url: src,
+        interact: true,
+      });
+
+      ws.on('timeupdate', (t) => { timeEl.textContent = formatTime(t); });
+      ws.on('play',   () => { btn.innerHTML = '&#9646;&#9646;'; });
+      ws.on('pause',  () => { btn.innerHTML = '&#9654;'; });
+      ws.on('finish', () => { btn.innerHTML = '&#9654;'; });
+
+      if (autoPlay) ws.once('ready', () => ws.play());
+
+      wavesurfers[wsId] = ws;
+      return ws;
+    }
+
+    function handlePlay(btn) {
+      const wsId = btn.dataset.wsid;
+      if (!wavesurfers[wsId]) {
+        initPlayer(wsId, true);
+      } else {
+        wavesurfers[wsId].playPause();
+      }
+    }
+
+    function buildTable(trackIdx) {
+      const instrHeaders = instruments
+        .map(inst => `<th>${inst.charAt(0).toUpperCase() + inst.slice(1)}</th>`)
+        .join('');
+
+      const rows = models.map((m) => {
+        const rowClass = m.rowClass ? ` class="${m.rowClass}"` : '';
+        const stemCells = instruments
+          .map(inst => `<td>${playerHTML(m.getStem(inst, trackIdx))}</td>`)
+          .join('');
+
+        return `<tr${rowClass}>
+          <td class="model-label">${m.label}</td>
+          <td>${playerHTML(m.getMix(trackIdx))}</td>
+          ${stemCells}
+        </tr>`;
+      }).join('');
+
+      return `<div class="audio-table-wrap">
+        <table class="audio-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Mix (input)</th>
+              ${instrHeaders}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    }
+
+    // Build tabs + content
+    const tabList    = document.getElementById('trackTabs');
+    const tabContent = document.getElementById('trackTabContent');
+
+    selectedTracks.forEach((trackIdx, pos) => {
+      const isFirst = pos === 0;
+      const paneId  = `track-pane-${trackIdx}`;
+
+      tabList.insertAdjacentHTML('beforeend', `
+        <li>
+          <button class="${isFirst ? 'active' : ''}"
+                  data-pane="${paneId}"
+                  onclick="switchTab(this)">
+            Track ${trackIdx + 1}
+          </button>
+        </li>`);
+
+      tabContent.insertAdjacentHTML('beforeend', `
+        <div class="tab-pane${isFirst ? ' active' : ''}" id="${paneId}">
+          ${buildTable(trackIdx)}
+        </div>`);
+    });
+
+    function switchTab(btn) {
+      document.querySelectorAll('.track-tabs button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.pane).classList.add('active');
+    }
+
+    // Init all players on page load so waveforms are visible immediately
+    document.querySelectorAll('.player').forEach(playerEl => {
+      initPlayer(playerEl.dataset.wsid, false);
+    });
+  </script>
 </body>
 </html>
-
-
-<!-- This is a comment for reference only -->
